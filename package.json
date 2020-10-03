@@ -1,0 +1,17 @@
+{
+  "name": "multiplayer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "console.log('Server start')"
+  },
+  "author": "Zimin",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "nodejs": "0.0.0",
+    "phaser": "^3.24.1",
+    "socket.io": "^2.3.0"
+  }
+}
