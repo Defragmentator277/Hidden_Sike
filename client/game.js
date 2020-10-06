@@ -9,10 +9,13 @@ class Game extends Phaser.Scene
         this.playerSpeed = 60;
         this.slideSpeed = 10;
         this.textScale = 0.5;
+        // this.
         //
         this.walls;
         this.this_player;
         this.players;
+        //Offset`s
+        this.point_move;
     }
 
     preload()
@@ -30,12 +33,12 @@ class Game extends Phaser.Scene
         .setScale(0.4)
         .setOrigin(0, 0);
         //Adding walls into group
-        this.walls = this.add.group(
+        this.walls = this.physics.add.staticGroup(
             [
-                this.add.image(250, 250, 'wall'),
-                this.add.image(500, 500, 'wall').setRotation(1.27),
-                this.add.image(300, 500, 'wall').setRotation(1.78),
-                this.add.image(500, 250, 'wall')
+                this.physics.add.staticSprite(250, 250, 'wall'),
+                this.physics.add.staticSprite(500, 500, 'wall'),
+                this.physics.add.staticSprite(300, 500, 'wall'),
+                this.physics.add.staticSprite(500, 250, 'wall')
             ]
         );
         //Создание сокета на стороне клиента
@@ -57,7 +60,9 @@ class Game extends Phaser.Scene
             Object.keys(current_players).forEach(id =>
             {
                 if(id == this.socket.id)
+                {
                     this.addPlayer(current_players[id]);
+                }
                 else
                     this.addOtherPlayer(current_players[id]);
             });
@@ -91,6 +96,24 @@ class Game extends Phaser.Scene
             });
         });
         //
+        this.input.on(Phaser.Input.Events.DRAG_START, (pointer) => 
+        {
+            this.point_move.x = pointer.x;
+            this.point_move.y = pointer.y;
+            console.log('Start: ' + this.point_move);
+        }).on(Phaser.Input.Events.DRAG_OVER, (pointer) => 
+        {
+            this.this_player = (pointer.x - this.point_move.x) + this.this_player.x;
+            this.this_player = (pointer.y - this.point_move.y) + this.this_player.y;
+            console.log('Over: ' + this.point_move);
+        }).on(Phaser.Input.Events.DRAG_END, (pointer) => 
+        {
+            console.log('End: ' + this.point_move);
+        });
+        // this.this_player.setInteractive(true);
+        //Light`s
+        // this.lights.addLight(400, 300, );
+        // this.lights.enable().setAmbientColor(0x000000);
     }
 
     update()
@@ -100,7 +123,6 @@ class Game extends Phaser.Scene
         //
         if(this.this_player)
         {
-            this.this_player.setVelocity(0, 0);
             //Check if position chainged
             if(this.this_player.oldPos && 
               (this.this_player.oldPos.x !== this.this_player.x ||
@@ -122,38 +144,51 @@ class Game extends Phaser.Scene
 
         }
         //Sprint
-        if(keys.shift.isDown)
-        {
-            console.log('sprinte');
-            speed += 50;
-        }
-        if(keys.up.isDown)
-        {
-            this.this_player.setVelocityY(-speed);
-        }
-        else if(keys.down.isDown)
-        {
-            this.this_player.setVelocityY(speed);
-        }
+        // if(keys.shift.isDown)
+        // {
+        //     console.log('sprinte');
+        //     speed += 50;
+        // }
+        // if(keys.up.isDown)
+        // {
+        //     this.this_player.setAccelerationY(-speed);
+        // }
+        // else if(keys.down.isDown)
+        // {
+        //     this.this_player.setAccelerationY(speed);
+        // }
+        // else
+        //     this.this_player.setAccelerationY(0);
         //
-        if(keys.left.isDown)
-        {
-            this.this_player.setVelocityX(-speed);
-        }
-        else if(keys.right.isDown)
-        {
-            this.this_player.setVelocityX(speed);
-        }
+        // if(keys.left.isDown)
+        // {
+        //     this.this_player.setAccelerationX(-speed);
+        // }
+        // else if(keys.right.isDown)
+        // {
+        //     this.this_player.setAccelerationX(speed);
+        // }
+        // else
+        //     this.this_player.setAccelerationX(0);
     }
 
     addPlayer(player)
     {
         let camera = this.cameras.main;
         // camera.getWorldPoint();
-        this.this_player = this.physics.add.sprite(player.x, player.y, 'player').setTint(0xFF33FF).setScale(this.players_scale);
+        this.this_player = this.physics.add.sprite(player.x, player.y, 'player')
+        .setTint(0xFF33FF)
+        .setScale(this.players_scale)
+        .setBounce(0.1)
+        .setCollideWorldBounds(true);
+        this.this_player.setCircle(this.this_player.height / 2);
+        this.this_player.setMaxVelocity(75);
+        // this.this_player.setInteractive();
+
         this.this_player.rotation = player.rotation;
         this.this_player.playerId = player.playerId;
-        this.this_player.setCollideWorldBounds(true);
+        this.physics.add.collider(this.players, this.this_player);
+        this.physics.add.collider(this.this_player, this.walls)
         camera.centerOn(player.x, player.y);
         camera.startFollow(this.this_player);
         camera.setZoom(2);
@@ -162,8 +197,11 @@ class Game extends Phaser.Scene
 
     addOtherPlayer(player)
     {
-        let oth_player = this.add.sprite(player.x, player.y, 'player').setScale(this.players_scale);
+        let oth_player = this.physics.add.sprite(player.x, player.y, 'player')
+        .setScale(this.players_scale)
+        .setImmovable(true);
         let scene = this;
+        oth_player.setCircle(oth_player.height / 2);
         oth_player.rotation = player.rotation;
         oth_player.playerId = player.playerId;
         //Following text with id, not neded
@@ -225,7 +263,7 @@ var config =
       default: 'arcade',
       arcade: 
       {
-        debug: false,
+        debug: true,
         gravity: { y: 0 }
       }
     }
