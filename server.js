@@ -33,6 +33,13 @@ io.on('connection', (socket) =>
         console.log('Игрок был удален');
         Status_Players(players);
     })
+
+    socket.on('posChainge', (info) => 
+    {
+        players[socket.id].x = info.x;
+        players[socket.id].y = info.y;
+        socket.broadcast.emit('posChainged', players[socket.id]);
+    });
 });
 //
 app.get('/', (req, res) => 
